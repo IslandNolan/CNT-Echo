@@ -6,9 +6,7 @@ import java.time.LocalDateTime;
 public class Main {
 
     protected static final LocalDateTime time = LocalDateTime.now();
-
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         /*
             Arg Examples:
@@ -18,18 +16,26 @@ public class Main {
                 if one or the other is present, jar will start in Standalone Client/Server Mode
 
          */
+        boolean local = false;
         if (args.length >= 1) {
-            if (args[0].toLowerCase().startsWith("-s")) {
+            for(int i=0;i<args.length;i++){
+                if(args[i].equals("--force-local")) {
+                    local = true;
+                    break;
+                }
+            }
+
+            if (args[0].toLowerCase().startsWith("--s")) {
                 //Manual and lock to while loop to listen for input.
                 int sPort;
                 try {
-                    sPort = Integer.parseInt(args[0].substring(2));
+                    sPort = Integer.parseInt(args[0].substring(3));
                 } catch(NumberFormatException e) { sPort = 0; }
 
                 try {
                     //0 will autoconfigure a port to use if left blank.
                     if(sPort!=0 && (sPort<2000 && sPort>8000)) { System.out.println("The specified port ("+sPort+") is out of range <2000-8000>"); System.exit(1); }
-                    Server s = new Server(sPort);
+                    Server s = new Server(sPort,local);
                     s.listen(); //Do the listening here
 
                 }
@@ -41,11 +47,11 @@ public class Main {
                     e.printStackTrace();
                     System.out.println("An unknown error has occurred..\nEnsure that the port you want to use is not currently reserved. Exiting.. ");
                 }
-            } else if (args[0].toLowerCase().startsWith("-c")) {
+            } else if (args[0].toLowerCase().startsWith("--c")) {
                 //Client init.
-                int cPort = Integer.parseInt(args[0].substring(2));
+                int cPort = Integer.parseInt(args[0].substring(3));
                 System.out.println("Initializing Standalone Client on Port <"+cPort+">..");
-                new Client(); //Do stuff
+                Client c = new Client("127.0.0.1",cPort); //Do stuff
 
             } else {
                 System.out.println("Unrecognized argument: " + args[0]);
