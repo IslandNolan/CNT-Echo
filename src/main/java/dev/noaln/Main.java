@@ -1,31 +1,36 @@
 package dev.noaln;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class Main {
 
-    protected static final Timestamp time = new Timestamp(new Date().getTime());
-    private static Client c = null;
-    private static Server s = null;
+    protected static final LocalDateTime time = LocalDateTime.now();
 
 
     public static void main(String[] args) {
 
+        /*
+            Arg Examples:
+                -c8000 -s8000
+                client port 8000, server port 8000
+                if both args are absent, integrated server will be started with automatic port selection
+                if one or the other is present, jar will start in Standalone Client/Server Mode
+
+         */
         if (args.length >= 1) {
             if (args[0].toLowerCase().startsWith("-s")) {
                 //Manual and lock to while loop to listen for input.
-                Integer sPort;
+                int sPort;
                 try {
                     sPort = Integer.parseInt(args[0].substring(2));
                 } catch(NumberFormatException e) { sPort = 0; }
 
                 try {
-                    //0 will auto configure a port to use if left blank.
+                    //0 will autoconfigure a port to use if left blank.
                     if(sPort!=0 && (sPort<2000 && sPort>8000)) { System.out.println("The specified port ("+sPort+") is out of range <2000-8000>"); System.exit(1); }
                     Server s = new Server(sPort);
-                    s.listen(); //Do the listening here..
+                    s.listen(); //Do the listening here
 
                 }
                 catch (IOException e){
@@ -33,29 +38,22 @@ public class Main {
                     System.exit(1);
                 }
                 catch (Exception e){
-                    System.out.println("An unknown error has occurred..\nEnsure that the port you want to use is not currently reserved.\nRestarting Standalone Server in 5 Seconds.. ");
-                    main(args);
+                    e.printStackTrace();
+                    System.out.println("An unknown error has occurred..\nEnsure that the port you want to use is not currently reserved. Exiting.. ");
                 }
             } else if (args[0].toLowerCase().startsWith("-c")) {
                 //Client init.
-                Integer cPort = Integer.parseInt(args[0].substring(2));
+                int cPort = Integer.parseInt(args[0].substring(2));
                 System.out.println("Initializing Standalone Client on Port <"+cPort+">..");
-                new Client();
+                new Client(); //Do stuff
 
             } else {
                 System.out.println("Unrecognized argument: " + args[0]);
                 System.exit(1);
             }
-
-        } else if (args.length == 1) {
-            //Bootstrap all in one client + server, then open input for client.
-            System.out.println("Initializing Integrated Server+Client on port <> ");
-
-
         } else {
-            System.out.println("Missing Arguments.. ");
-            System.exit(1);
-
+            //Integrated Automatic Server + Client...
+            System.out.println("Implement Integrated Client+Server on Automatic Port Select later");
         }
     }
 }
