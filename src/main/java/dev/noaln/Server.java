@@ -132,6 +132,8 @@ public class Server {
                 try {
                     String response, hostAddress = connectionList.get(s).right.getInetAddress().getHostAddress();
                     while (connectionList.containsKey(s) && (response = connectionList.get(s).left.readLine()) != null) {
+                        response = response.stripLeading();
+                        response = response.stripTrailing();
                         switch (response) {
                             case "help" -> {
                                 logMessage(connectionList.get(s).right, """
