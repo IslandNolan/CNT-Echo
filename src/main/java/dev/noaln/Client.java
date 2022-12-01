@@ -24,36 +24,12 @@ public class Client {
         br = new BufferedReader(new InputStreamReader(s.getInputStream()));
         PrintWriter out = new PrintWriter(s.getOutputStream(), true);
 
-
         System.out.println("Sending.. ");
         out.println("ping");
-        out.flush();
-        checkResponse();
-
         out.println("date");
-        out.flush();
-        checkResponse();
-
-
         out.println("uptime");
-        out.flush();
-        checkResponse();
-
         out.println("memory");
-        out.flush();
-        checkResponse();
-
-
         out.println("exit");
-        out.flush();
-        checkResponse();
-
-    }
-    public void checkResponse() throws IOException {
-        String answer;
-        while((answer = br.readLine()) != null) {
-            System.out.println(answer);
-            break;
-        }
+        br.lines().forEach(System.out::println);
     }
 }

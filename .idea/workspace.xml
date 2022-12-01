@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="55ea994b-925e-4433-8509-c82d8496c1ca" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/dev/noaln/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/noaln/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/dev/noaln/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/noaln/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/dev/noaln/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/dev/noaln/Client.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +111,7 @@
       <workItem from="1669250814647" duration="2955000" />
       <workItem from="1669750451421" duration="4905000" />
       <workItem from="1669755621238" duration="18655000" />
-      <workItem from="1669822700110" duration="15804000" />
+      <workItem from="1669822700110" duration="16567000" />
     </task>
     <task id="LOCAL-00001" summary="Full Content for Server">
       <created>1669760828116</created>
@@ -142,7 +141,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669845001106</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Fixes">
+      <created>1669858030249</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1669858030249</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -154,7 +160,8 @@
     <MESSAGE value="Enhancements to Server/Multithreading&#10; -Fixed a few bugs with terminating the server&#10; -Allow individual clients to disconnect from each other&#10; -Cleaned + Refactored codebase" />
     <MESSAGE value="Dummy Client code&#10; -Hard-coded requirements to satiate the requirements for the assignment&#10; -This should be used over telnet instead.." />
     <MESSAGE value="Shade Maven Dependencies" />
-    <option name="LAST_COMMIT_MESSAGE" value="Shade Maven Dependencies" />
+    <MESSAGE value="Fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixes" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
