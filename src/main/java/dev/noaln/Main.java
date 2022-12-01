@@ -16,14 +16,8 @@ public class Main {
                 if one or the other is present, jar will start in Standalone Client/Server Mode
 
          */
-        boolean local = false;
         if (args.length >= 1) {
-            for(int i=0;i<args.length;i++){
-                if(args[i].equals("--force-local")) {
-                    local = true;
-                    break;
-                }
-            }
+
 
             if (args[0].toLowerCase().startsWith("--s")) {
                 //Manual and lock to while loop to listen for input.
@@ -34,8 +28,7 @@ public class Main {
 
                 try {
                     //0 will autoconfigure a port to use if left blank.
-                    if(sPort!=0 && (sPort<2000 && sPort>8000)) { System.out.println("The specified port ("+sPort+") is out of range <2000-8000>"); System.exit(1); }
-                    Server s = new Server(sPort,local);
+                    Server s = new Server(sPort);
                     s.listen(); //Do the listening here
 
                 }

@@ -3,48 +3,18 @@ package dev.noaln;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.io.*;
-import java.lang.management.MemoryManagerMXBean;
 import java.net.*;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
 public class Server {
-
-    private Boolean forceLocalConnection;
     private final ServerSocket ss;
     private final HashMap<String, MutablePair<BufferedReader,Socket>> connectionList = new HashMap<>();
-    public Server(Integer port,Boolean forceLocalConnection) throws IOException {
+    public Server(Integer port) throws IOException {
         System.out.println("Configuring Server.. ");
         this.ss = new ServerSocket(port);
-        this.forceLocalConnection = forceLocalConnection;
         if(port==0) { System.out.println("No port was specified in the command arguments, selecting next available port.. "); }
-        String ip="127.0.0.1",device="Loopback"; // make blank so no npe
-        if(!this.forceLocalConnection) {
-            try {
-                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                while (interfaces.hasMoreElements()) {
-                    NetworkInterface networkInterface = interfaces.nextElement();
-
-                    if (networkInterface.isLoopback() || !networkInterface.isUp()) // get rid of loop back devices/addresses
-                        continue;
-
-                    Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-                    while (addresses.hasMoreElements()) {
-                        InetAddress addr = addresses.nextElement();
-                        ip = ip.toLowerCase(); // just in case windows gets any smart ideas.
-                        if (ip.contains("abc-def:")) continue; // filter out colon-hexadecimal to find ipv4
-                        ip = addr.getHostAddress();
-                        device = networkInterface.getDisplayName();
-                    }
-                }
-            } catch (SocketException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        System.out.println("Listening on device: "+device+" --> "+ip+":"+ss.getLocalPort());
+        System.out.println("Listening on port: "+ss.getLocalPort());
     }
     //region Logical
 
@@ -58,10 +28,10 @@ public class Server {
             System.out.println("[ERROR] Failed to send response to Client.. ");
         }
     }
-    public void sendMessage(String key,String message,Boolean omitPrefix,Boolean omitHost){
+    public void sendMessage(String key,String message,Boolean omitPrefix){
         try {
             connectionList.get(key).right.getOutputStream().write(("     "+message+((!omitPrefix) ? "\n>> " : "\n")).getBytes());
-            StringBuilder consoleMessage = new StringBuilder("[" + Main.time + ((omitHost) ? (" | " + connectionList.get(key).right.getInetAddress().getHostAddress()) : "") + "]    ");
+            StringBuilder consoleMessage = new StringBuilder("[" + LocalDateTime.now() + " | " + connectionList.get(key).right.getInetAddress().getHostAddress() +"]");
             while(consoleMessage.length()!=60) { consoleMessage.append(" "); }
             System.out.println(consoleMessage+message);
 
@@ -142,8 +112,8 @@ public class Server {
                                        \n
                                        --------------------------------------Help---------------------------------------
                                        
-                                       disconnect,quit  : Disconnect current client and leave server active.
-                                       shutdown,exit    : Kill the server, and all active connections.
+                                       disconnect       : Disconnect current client and leave server active.
+                                       quit,exit        : Kill the server, and all active connections.
                                        ping             : Send response 'Pong!' to test the latency of the connection
                                        uptime           : Display current server up-time
                                        date             : Display the current Date in Timestamp Format
@@ -158,23 +128,26 @@ public class Server {
 
                             }
                             case "date" -> {
-                                LocalDateTime temp = LocalDateTime.now();
-                                sendMessage(hostAddress,"Date: "+temp.toString(),true,!forceLocalConnection);
+                                sendMessage(hostAddress, new BufferedReader(new InputStreamReader(Runtime.getRuntime()
+                                        .exec("date").getInputStream())).readLine().trim() ,true);
                             }
                             case "memory" -> {
-                                sendMessage(hostAddress,"Memory Use: "+getMemory(),true,!forceLocalConnection);
-
+                                BufferedReader br = new BufferedReader(new InputStreamReader(Runtime.getRuntime().exec("free").getInputStream()));
+                                String res;
+                                while((res = br.readLine())!=null){
+                                    sendMessage(hostAddress,res,true);
+                                }
                             }
-                            case "disconnect","quit" -> {
+                            case "disconnect" -> {
                                 logMessage(connectionList.get(s).right, "Disconnecting Client.. ");
                                 connectionList.get(s).right.close();
                                 connectionList.get(s).left.close(); //Potential Issue Here..
                                 itr.remove();
                                 s = null;
                             }
-                            case "shutdown", "exit" -> {
+                            case "quit", "exit" -> {
                                 sendMessage(hostAddress,
-                                        "Server Shutting down.. ",true,!forceLocalConnection);
+                                        "Server Shutting down.. ",true);
                                 String finalS = s;
                                 connectionList.values().forEach(x -> {
                                     try {
@@ -187,26 +160,18 @@ public class Server {
                                     handshake.interrupt();
                                     System.out.println("Closing Server Socket.. ");
                                     this.ss.close();
-                                } catch (Exception ignored) {
-                                }
+                                } catch (Exception ignored) { } //I know this is bad, doesn't matter though, server shutting down
                                 System.exit(0);
                             }
                             case "ping" ->
-                                sendMessage(hostAddress, "Ping: Pong!",true,!forceLocalConnection);
+                                sendMessage(hostAddress, "Ping: Pong!",true);
 
                             case "uptime" -> {
-                                LocalDateTime time = LocalDateTime.now();
-                                Duration diff = Duration.between(Main.time, time);
-                                long days = diff.toDays();
-                                long hours = diff.toHours() - 24 * days;
-                                long months = diff.toMinutes() - 60 * diff.toHours();
-                                long seconds = diff.getSeconds() - 60 * diff.toMinutes();
-                                String diffString = ("Uptime: " + days + "d " + hours + "h " + months + "m " + seconds + "s, since " + Main.time);
-                                sendMessage(hostAddress, diffString,true,!forceLocalConnection);
-
+                                sendMessage(hostAddress, new BufferedReader(new InputStreamReader(Runtime.getRuntime()
+                                        .exec("uptime").getInputStream())).readLine().trim() ,true);
                             }
                             default ->
-                                sendMessage(hostAddress, ("Unknown command \"" + response + "\" "),true,!forceLocalConnection);
+                                sendMessage(hostAddress, ("Unknown command \"" + response + "\" "),true);
                         }
                     }
                 } catch (NullPointerException e) {
@@ -219,18 +184,6 @@ public class Server {
             }
         }
     }
-
-    private static double bytesToMiB(long bytes) {
-        return ((double) bytes / 1024L * 1024L);
-    }
-    public static String getMemory() {
-        DecimalFormat df = new DecimalFormat("##.###", new DecimalFormatSymbols(Locale.ENGLISH));
-        double usedMiB = bytesToMiB(Runtime.getRuntime().maxMemory())-Runtime.getRuntime().freeMemory();
-        double maxMiB = bytesToMiB(Runtime.getRuntime().maxMemory());
-        return  "("+df.format((usedMiB/maxMiB)*100)+"%) - ["+df.format(usedMiB) + " / " +df.format(maxMiB) + "]";
-    }
-
-
     //endregion
 
     //region Getters
