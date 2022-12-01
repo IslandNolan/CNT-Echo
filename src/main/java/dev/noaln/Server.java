@@ -6,10 +6,11 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     private final ServerSocket ss;
-    private final HashMap<String, MutablePair<BufferedReader,Socket>> connectionList = new HashMap<>();
+    private final ConcurrentHashMap<String, MutablePair<BufferedReader,Socket>> connectionMap = new ConcurrentHashMap<>();
     public Server(Integer port) throws IOException {
         System.out.println("Configuring Server.. ");
         this.ss = new ServerSocket(port);
@@ -30,8 +31,8 @@ public class Server {
     }
     public void sendMessage(String key,String message,Boolean omitPrefix){
         try {
-            connectionList.get(key).right.getOutputStream().write(("     "+message+((!omitPrefix) ? "\n>> " : "\n")).getBytes());
-            StringBuilder consoleMessage = new StringBuilder("[" + LocalDateTime.now() + " | " + connectionList.get(key).right.getInetAddress().getHostAddress() +"]");
+            connectionMap.get(key).right.getOutputStream().write(("     "+message+((!omitPrefix) ? "\n>> " : "\n")).getBytes());
+            StringBuilder consoleMessage = new StringBuilder("[" + LocalDateTime.now() + " | " + connectionMap.get(key).right.getInetAddress().getHostAddress() +"]");
             while(consoleMessage.length()!=60) { consoleMessage.append(" "); }
             System.out.println(consoleMessage+message);
 
@@ -52,7 +53,7 @@ public class Server {
                 s.setKeepAlive(true);
                 MutablePair<BufferedReader,Socket> pair = new MutablePair<>(brl,s);
                 //Must also store 'Client' here as a nested object in a tuple
-                connectionList.put(s.getInetAddress().getHostAddress(),pair);
+                connectionMap.put(s.getInetAddress().getHostAddress(),pair);
                 logMessage(s,("Established Client Connection to: "+s.getInetAddress().getHostAddress()));
             }
             @Override
@@ -65,8 +66,8 @@ public class Server {
                         //noinspection BusyWait
                         Thread.sleep(1000);
                         String key = s.getInetAddress().getHostAddress();
-                        if(connectionList.containsKey(key)) {
-                            if(connectionList.get(key).right.isConnected()){
+                        if(connectionMap.containsKey(key)) {
+                            if(connectionMap.get(key).right.isConnected()){
                                 logMessage(s,"Rejected Connection.. Already Exists.. ");
                                 s.getOutputStream().write("You have a pre-existing active connection from this machine.. You may only have one at a time".getBytes());
                                 s.close();
@@ -96,17 +97,17 @@ public class Server {
         while(true){
             //noinspection BusyWait
             Thread.sleep(100);
-            Iterator<String> itr = connectionList.keySet().iterator();
+            Iterator<String> itr = connectionMap.keySet().iterator();
             String s = (itr.hasNext() ? itr.next() : null);
             while(s != null) {
                 try {
-                    String response, hostAddress = connectionList.get(s).right.getInetAddress().getHostAddress();
-                    while (connectionList.containsKey(s) && (response = connectionList.get(s).left.readLine()) != null) {
+                    String response, hostAddress = connectionMap.get(s).right.getInetAddress().getHostAddress();
+                    while (connectionMap.containsKey(s) && (response = connectionMap.get(s).left.readLine()) != null) {
                         response = response.stripLeading();
                         response = response.stripTrailing();
                         switch (response) {
                             case "help" -> {
-                                logMessage(connectionList.get(s).right, """
+                                logMessage(connectionMap.get(s).right, """
                                         Displaying Help dialogue for:"""+" "+s);
                                 String helpDialogue = """
                                        \n
@@ -124,7 +125,7 @@ public class Server {
                                         
                                         """;
                                 //Don't use sendMessage here because timestamp/host/additional info is not required.
-                                connectionList.get(s).right.getOutputStream().write((helpDialogue+"\n").getBytes());
+                                connectionMap.get(s).right.getOutputStream().write((helpDialogue+"\n").getBytes());
 
                             }
                             case "date" -> {
@@ -139,9 +140,9 @@ public class Server {
                                 }
                             }
                             case "disconnect" -> {
-                                logMessage(connectionList.get(s).right, "Disconnecting Client.. ");
-                                connectionList.get(s).right.close();
-                                connectionList.get(s).left.close(); //Potential Issue Here..
+                                logMessage(connectionMap.get(s).right, "Disconnecting Client.. ");
+                                connectionMap.get(s).right.close();
+                                connectionMap.get(s).left.close(); //Potential Issue Here..
                                 itr.remove();
                                 s = null;
                             }
@@ -149,9 +150,9 @@ public class Server {
                                 sendMessage(hostAddress,
                                         "Server Shutting down.. ",true);
                                 String finalS = s;
-                                connectionList.values().forEach(x -> {
+                                connectionMap.values().forEach(x -> {
                                     try {
-                                        logMessage(connectionList.get(finalS).right,"Closing connection to client.. ");
+                                        logMessage(connectionMap.get(finalS).right,"Closing connection to client.. ");
                                         x.right.close();
                                     } catch (Exception ignored) {
                                     }
@@ -177,7 +178,7 @@ public class Server {
                 } catch (NullPointerException e) {
                     e.printStackTrace();
                 }
-                if(!itr.hasNext()) { itr = connectionList.keySet().iterator(); }
+                if(!itr.hasNext()) { itr = connectionMap.keySet().iterator(); }
                 else {
                     s = itr.next();
                 }
